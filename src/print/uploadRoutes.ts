@@ -1,23 +1,8 @@
 import express from 'express';
-import AppDataSource from './config';
-import { authRoutes } from './auth/routes';
-import cors from 'cors';
-import dotenv from 'dotenv';
 import multer from 'multer';
 import pdfParse from 'pdf-parse';
 
-const app = express();
-const port = 3003;
-
-app.use(express.json());
-app.use(
-  cors({
-    origin: '*',
-  })
-);
-
-dotenv.config();
-
+const uploadRouter = express.Router();
 const upload = multer();
 
 const calculatePrintingCost = (pages: number, isColor: boolean): number => {
@@ -30,9 +15,8 @@ const calculatePrintingCost = (pages: number, isColor: boolean): number => {
   return totalCost;
 };
 
-app.post('/upload', upload.single('fileField'), async (req, res) => {
+uploadRouter.post('/upload', upload.single('fileField'), async (req, res) => {
   const file = req.file;
-  console.log(file)
 
   if (!file) {
     return res.status(400).json({ error: 'No file provided' });
@@ -42,11 +26,10 @@ app.post('/upload', upload.single('fileField'), async (req, res) => {
   let pages = 0;
   let fileSize = file.size;
 
-  try{
+  try {
     const data = await pdfParse(file.buffer);
-    console.log(data)
-    pages = data.numpages
-    
+    pages = data.numpages;
+
     if (pages > 20) {
       return res.status(400).json({ error: 'Maximum number of pages exceeded.' });
     }
@@ -58,12 +41,4 @@ app.post('/upload', upload.single('fileField'), async (req, res) => {
   }
 });
 
-app.use('/api/v1/auth', authRoutes);
-
-AppDataSource.initialize()
-  .then(() => {
-    app.listen(port, () => {
-      console.log(`Application is running on port ${port}.`);
-    });
-  })
-  .catch((err: any) => console.log('Error:', err));
+export default uploadRouter;
