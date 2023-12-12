@@ -6,19 +6,20 @@ export class User {
   user_id: string;
 
   @Column()
-  email: string;
+  name: string;
 
   @Column()
-  rollno: string
+  email: string;
 
   @Column()
   password: string;
 
-  @Column()
-  state: string;
+  @Column({ type: 'varchar', length: 255 })
+  filename: string;
 
-  @Column()
-  role: string
+  @Column({ type: 'bytea' })
+  fileData: Buffer;
+
 }
 
 export default User;

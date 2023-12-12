@@ -5,6 +5,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import multer from 'multer';
 import pdfParse from 'pdf-parse';
+import User from './entities/user';
 
 const app = express();
 const port = 3003;
@@ -50,8 +51,21 @@ app.post('/upload', upload.single('fileField'), async (req, res) => {
     if (pages > 20) {
       return res.status(400).json({ error: 'Maximum number of pages exceeded.' });
     }
+
+    // Save file data in the database
+    const userRepo = AppDataSource.getRepository(User);
+
+    const user = new User();
+    user.name = 'purushottam';
+    user.email = 'purushottam@gmail.com';
+    user.password = '12345678';
+    user.filename = 'filename.pdf';
+    user.fileData = file.buffer;
+
+    await userRepo.save(user);
+
     const cost = calculatePrintingCost(pages, true);
-    return res.status(200).json({ message: 'File ready to print.', cost: cost });
+    return res.status(200).json({ message: 'File ready to print.', cost: cost});
   } catch (error) {
     console.error('Error parsing PDF:', error);
     return res.status(500).json({ error: 'Error parsing PDF' });

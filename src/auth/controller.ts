@@ -6,7 +6,7 @@ import User from "../entities/user";
 const generateAccessToken = (user: User): String => {
   const id = user.user_id;
   return jwt.sign({ id: id }, process.env.TOKEN_SECRET || "", {
-    expiresIn: "20s",
+    expiresIn: "20s"
   });
 };
 
@@ -74,26 +74,38 @@ const login = async (req: any, res: any) => {
 };
 
 const register = async (req: any, res: any) => {
-  const userRepo = AppDataSource.getRepository(User)
+  const userRepo = AppDataSource.getRepository(User);
 
-  const user = await userRepo.findOne({
-    where: { email: req.body.email },
-  });
-
-  if (user) {
-    res.status(203).json({
-      message: "User already Registered, Please Login to your account",
+  try {
+    const existingUser = await userRepo.findOne({
+      where: { email: req.body.email },
     });
-  } else {
-    let user = { ...req.body };
-    const hashedpassword = await bcrypt.hash(user.password, 12);
-    user.password = hashedpassword;
-    const user_saved = await userRepo.save(user);
+
+    if (existingUser) {
+      res.status(400).json({
+        message: "User already registered. Please login to your account.",
+      });
+    } else {
+      const newUser = { ...req.body };
+      const hashedPassword = await bcrypt.hash(newUser.password, 12);
+      newUser.password = hashedPassword;
+
+      const savedUser = await userRepo.save(newUser);
+
+      res.status(201).json({
+        message: "User registration successful.",
+        user: savedUser,
+      });
+    }
+  } catch (error) {
+    console.error('Error registering user:', error);
+    res.status(500).json({
+      message: "Registration failed. Please try again later.",
+    });
   }
 };
 
 const logout = (req: any, res: any) => {
-  ////////////////////////////////////////////////////////////////
   return res.json({ message: "User logged out" });
 };
 
